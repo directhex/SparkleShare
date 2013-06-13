@@ -64,7 +64,30 @@ case $1 in
   open|--open)
     invite=`date -u +%N`
     open=`echo $2 | sed 's/sparkleshare:\/\/addProject\///'`
-    curl --insecure --output ~/SparkleShare/$invite.xml $open
+    returncode=`curl --silent --output /dev/null --insecure --write-out "%{http_code}\n" $open`
+    case $returncode in
+      401)
+        ssuser=`zenity --title="Add Invite to SparkleShare" \
+                       --separator=" password " \
+                       --text="Password-protected Invite" \
+                       --forms \
+                       --add-entry="Username" \
+                       --add-password="Password"`
+        machine=`echo $open | cut -d'/' -f3`
+        netrc="machine $machine login $ssuser"
+        echo $netrc > ~/SparkleShare/$invite.netrc
+        curl --netrc-file ~/SparkleShare/$invite.netrc \
+             --insecure --output ~/SparkleShare/$invite.xml $open
+        rm -f ~/SparkleShare/$invite.netrc
+        ;;
+      404)
+        zenity --title="Add Invite to SparkleShare" --error \
+               --text="This SparkleShare Invite could not be found"
+        ;;
+      *)
+        curl --insecure --output ~/SparkleShare/$invite.xml $open
+        ;;
+    esac
     ;;
   *)
     mono "@expanded_libdir@/@PACKAGE@/SparkleShare.exe" --help
