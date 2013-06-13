@@ -79,6 +79,7 @@ case $1 in
         curl --netrc-file ~/SparkleShare/$invite.netrc \
              --insecure --output ~/SparkleShare/$invite.xml $open
         rm -f ~/SparkleShare/$invite.netrc
+        $0 start
         ;;
       404)
         zenity --title="Add Invite to SparkleShare" --error \
